@@ -1,5 +1,6 @@
-package sample;
+package base.bodies;
 
+import base.fixtures.FixtureDataBase;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import org.jbox2d.collision.shapes.PolygonShape;
@@ -13,9 +14,9 @@ import java.util.ArrayList;
 
 public class BodyDataBase {
 
-    private FixtureTilemap map;
-    private Color color;
-    private ArrayList<Fixture> toDestroy;
+    protected FixtureTilemap map;
+    protected Color color;
+    protected ArrayList<Fixture> toDestroy;
 
     public BodyDataBase() {
         map = new FixtureTilemap();
@@ -49,11 +50,15 @@ public class BodyDataBase {
         return f;
     }
 
-    public void addDoomed(@NotNull Fixture f) {
+    public boolean checkTile(int x, int y) {
+        return map.checkTile(x, y);
+    }
+
+    public void addCollided(@NotNull Fixture f) {
         toDestroy.add(f);
     }
 
-    public void destroyDoomed(@NotNull Body self) {
+    public void handleCollided(@NotNull Body self) {
         for (Fixture f : toDestroy) {
             f.m_userData = null;
             self.destroyFixture(f);
@@ -61,12 +66,15 @@ public class BodyDataBase {
         toDestroy.clear();
     }
 
-    private class FixtureTilemap {
+    protected class FixtureTilemap {
 
         private ArrayList<ArrayList<Fixture>> tilemap;
 
         private int centerTileX;
         private int centerTileY;
+
+        private int mapWidth;
+        private int mapHeight;
 
         public FixtureTilemap() {
             centerTileX = 0;
@@ -92,15 +100,39 @@ public class BodyDataBase {
                 }
                 centerTileY++;
             }
-            while (tilemap.size() < centerTileX + x + 1) {
+
+            mapWidth = Math.max(mapWidth, centerTileX + x + 1);
+            mapHeight = Math.max(mapHeight, centerTileY + y + 1);
+
+            while (tilemap.size() < mapWidth) {
                 tilemap.add(new ArrayList<>());
             }
             for (ArrayList<Fixture> row : tilemap) {
-                while (row.size() < centerTileY + y + 1) {
+                while (row.size() < mapHeight) {
                     row.add(null);
                 }
             }
+
             tilemap.get(centerTileX + x).set(centerTileY + y, f);
+        }
+
+        public boolean checkTile(int x, int y) {
+
+            //If outside the tile grid, or if the tile is null (never assigned) or its body is null (destroyed fixture),
+            // return false, otherwise true
+            try {
+                if (centerTileX + x < 0 || centerTileY + y < 0 || centerTileX + x >= mapWidth || centerTileY + y >= mapHeight) {
+                    return false;
+                } else if (tilemap.get(centerTileX + x).get(centerTileY + y) == null || tilemap.get(centerTileX + x).get(centerTileY + y).m_body == null) {
+                    tilemap.get(centerTileX + x).set(centerTileY + y, null);
+                    return false;
+                }
+                return true;
+            } catch(IndexOutOfBoundsException e) {
+                tilemap.forEach(fixtures -> System.out.print(fixtures.size() + ","));
+                throw new Error("\nAttempted to access element out of range for 2d array.\n" + e.getMessage());
+            }
+
         }
 
         public void drawMap(GraphicsContext gc, float scale) {

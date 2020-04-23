@@ -1,5 +1,7 @@
-package sample;
+package base;
 
+import base.bodies.AsteroidBodyData;
+import base.bodies.BodyDataBase;
 import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -36,10 +38,10 @@ public class Controller implements Initializable {
             @Override
             public void beginContact(Contact contact) {
                 if (contact.m_fixtureA.getBody().m_userData != null && BodyDataBase.class.isAssignableFrom(contact.m_fixtureA.getBody().m_userData.getClass())) {
-                    ((BodyDataBase) contact.m_fixtureA.getBody().m_userData).addDoomed(contact.m_fixtureA);
+                    ((BodyDataBase) contact.m_fixtureA.getBody().m_userData).addCollided(contact.m_fixtureA);
                 }
                 if (contact.m_fixtureB.getBody().m_userData != null && BodyDataBase.class.isAssignableFrom(contact.m_fixtureB.getBody().m_userData.getClass())) {
-                    ((BodyDataBase) contact.m_fixtureB.getBody().m_userData).addDoomed(contact.m_fixtureB);
+                    ((BodyDataBase) contact.m_fixtureB.getBody().m_userData).addCollided(contact.m_fixtureB);
                 }
             }
 
@@ -116,7 +118,7 @@ public class Controller implements Initializable {
 
                 for (Body b = world.getBodyList(); b != null; b = b.getNext()) {
                     if (b.m_userData != null && BodyDataBase.class.isAssignableFrom(b.m_userData.getClass())) {
-                        ((BodyDataBase) b.m_userData).destroyDoomed(b);
+                        ((BodyDataBase) b.m_userData).handleCollided(b);
                     }
                     if (b.getFixtureList() == null) {
                         toDestroy.add(b);
@@ -124,14 +126,14 @@ public class Controller implements Initializable {
                     b.applyForceToCenter(new Vec2(-b.getPosition().x / 100 * b.m_mass, -b.getPosition().y / 100 * b.m_mass));
                 }
 
+                System.out.println(toDestroy.size());
+
                 for (Body b : toDestroy) {
                     world.destroyBody(b);
                     createAsteroid(a);
                 }
 
                 //TODO: Cause disjoint asteroids to break into smaller pieces, and shift body center relative to center of mass accordingly.
-
-                System.out.println(world.getBodyCount());
 
                 // Step forward the game physics
                 world.step(1.0f/60, 8, 3);
@@ -144,13 +146,20 @@ public class Controller implements Initializable {
         asteroidDef.position = new Vec2((float) (Math.random() - 0.5) * 100, (float) (Math.random() - 0.5) * 100);
 
         Body asteroid = world.createBody(asteroidDef);
-        asteroid.m_userData = new BodyDataBase();
+        asteroid.m_userData = new AsteroidBodyData();
 
-        int tileCount = (int) Math.ceil(Math.random() * 100);
+        int tileCount = (int) Math.ceil(Math.random() * 50);
         int bound = (int) Math.ceil(Math.sqrt(tileCount));
 
+        int x;
+        int y;
+
         for (int j = 0; j < tileCount; j++) {
-            ((BodyDataBase) asteroid.m_userData).addTile(asteroid, (int) ((Math.random() - 0.5) * bound), (int) ((Math.random() - 0.5) * bound));
+            x = (int) ((Math.random() - 0.5) * bound);
+            y = (int) ((Math.random() - 0.5) * bound);
+            if (!((AsteroidBodyData) asteroid.m_userData).checkTile(x, y)) {
+                ((AsteroidBodyData) asteroid.m_userData).addTile(asteroid, x, y);
+            }
         }
 
         asteroid.setLinearVelocity(new Vec2((float) (Math.random() - 0.5) * 20, (float) (Math.random() - 0.5) * 20));

@@ -1,4 +1,4 @@
-package sample;
+package base.fixtures;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
@@ -6,7 +6,7 @@ import org.jbox2d.collision.shapes.PolygonShape;
 
 public class FixtureDataBase {
 
-    private PolygonShape physicsShape;
+    protected PolygonShape physicsShape;
 
     public FixtureDataBase(PolygonShape shape) {
         physicsShape = shape;

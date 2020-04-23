@@ -1,6 +1,6 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.canvas.Canvas?>
-<AnchorPane fx:controller="sample.Controller"
+<AnchorPane fx:controller="base.Controller"
             xmlns:fx="http://javafx.com/fxml" fx:id="parent">
     <Canvas fx:id="canvas" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0" AnchorPane.topAnchor="0"/>
 </AnchorPane>
