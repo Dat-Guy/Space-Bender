@@ -2,6 +2,7 @@ package base;
 
 import base.bodies.AsteroidBodyData;
 import base.bodies.BodyDataBase;
+import base.bodies.PlayerBodyData;
 import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -12,6 +13,7 @@ import javafx.scene.paint.Color;
 import org.jbox2d.callbacks.ContactImpulse;
 import org.jbox2d.callbacks.ContactListener;
 import org.jbox2d.collision.Manifold;
+import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.*;
 import org.jbox2d.dynamics.contacts.Contact;
@@ -27,7 +29,7 @@ public class Controller implements Initializable {
 
     @SuppressWarnings({"unused"})
     private World world;
-    private boolean DEBUG_DRAW = true;
+    private final boolean DEBUG_DRAW = true;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -73,6 +75,21 @@ public class Controller implements Initializable {
             createAsteroid(a);
         }
 
+        BodyDef p = new BodyDef();
+        p.type = BodyType.DYNAMIC;
+        p.linearDamping = 0.5f;
+        p.angularDamping = 0.5f;
+
+        PolygonShape playerCollision = new PolygonShape();
+        playerCollision.setAsBox(0.5f, 1.0f);
+        FixtureDef playerComp = new FixtureDef();
+        playerComp.shape = playerCollision;
+        playerComp.density = 5.0f;
+
+        Body player = world.createBody(p);
+        player.createFixture(playerComp);
+        player.m_userData = new PlayerBodyData();
+
         new AnimationTimer() {
             @Override
             public void handle(long l) {
@@ -114,6 +131,8 @@ public class Controller implements Initializable {
                 gc.restore();
 
                 // Do game logic
+                ((PlayerBodyData) player.m_userData).doKeyUpdate(player);
+
                 ArrayList<Body> toDestroy = new ArrayList<>();
 
                 for (Body b = world.getBodyList(); b != null; b = b.getNext()) {
@@ -125,8 +144,6 @@ public class Controller implements Initializable {
                     }
                     b.applyForceToCenter(new Vec2(-b.getPosition().x / 100 * b.m_mass, -b.getPosition().y / 100 * b.m_mass));
                 }
-
-                System.out.println(toDestroy.size());
 
                 for (Body b : toDestroy) {
                     world.destroyBody(b);

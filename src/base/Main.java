@@ -3,6 +3,7 @@ package base;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 
@@ -17,6 +18,9 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception{
         AnchorPane root = FXMLLoader.load(getClass().getResource("base.fxml"));
         Scene primaryScene = new Scene(root, 600, 550);
+
+        primaryScene.addEventHandler(KeyEvent.KEY_PRESSED, new InputHandler.keyPressedHandler());
+        primaryScene.addEventHandler(KeyEvent.KEY_RELEASED, new InputHandler.keyReleasedHandler());
 
         primaryStage.setTitle("Hello World");
         primaryStage.setScene(primaryScene);

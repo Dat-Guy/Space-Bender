@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class AsteroidBodyData extends BodyDataBase {
+public class AsteroidBodyData extends TiledBodyDataBase {
 
     public AsteroidBodyData(){
         map = new FixtureTilemap();
