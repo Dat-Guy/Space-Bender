@@ -12,7 +12,7 @@ public class FixtureDataBase {
         physicsShape = shape;
     }
 
-    public void draw(GraphicsContext gc, float scale, Color color) {
+    public void draw(GraphicsContext gc, double scale, Color color) {
         double[] x = new double[physicsShape.getVertexCount()];
         double[] y = new double[physicsShape.getVertexCount()];
 

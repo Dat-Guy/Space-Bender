@@ -10,6 +10,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
+import javafx.scene.transform.Rotate;
 import org.jbox2d.callbacks.ContactImpulse;
 import org.jbox2d.callbacks.ContactListener;
 import org.jbox2d.collision.Manifold;
@@ -40,10 +41,10 @@ public class Controller implements Initializable {
             @Override
             public void beginContact(Contact contact) {
                 if (contact.m_fixtureA.getBody().m_userData != null && BodyDataBase.class.isAssignableFrom(contact.m_fixtureA.getBody().m_userData.getClass())) {
-                    ((BodyDataBase) contact.m_fixtureA.getBody().m_userData).addCollided(contact.m_fixtureA);
+                    ((BodyDataBase) contact.m_fixtureA.getBody().m_userData).addCollided(contact.m_fixtureA, contact.m_fixtureB);
                 }
                 if (contact.m_fixtureB.getBody().m_userData != null && BodyDataBase.class.isAssignableFrom(contact.m_fixtureB.getBody().m_userData.getClass())) {
-                    ((BodyDataBase) contact.m_fixtureB.getBody().m_userData).addCollided(contact.m_fixtureB);
+                    ((BodyDataBase) contact.m_fixtureB.getBody().m_userData).addCollided(contact.m_fixtureB, contact.m_fixtureA);
                 }
             }
 
@@ -68,10 +69,10 @@ public class Controller implements Initializable {
         canvas.heightProperty().bind(parent.heightProperty());
 
         BodyDef a = new BodyDef();
-        a.type = BodyType.DYNAMIC;
+        a.type = BodyType.STATIC;
         a.linearDamping = 0.05f;
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 30; i++) {
             createAsteroid(a);
         }
 
@@ -85,6 +86,7 @@ public class Controller implements Initializable {
         FixtureDef playerComp = new FixtureDef();
         playerComp.shape = playerCollision;
         playerComp.density = 5.0f;
+        playerComp.restitution = 0.0f;
 
         Body player = world.createBody(p);
         player.createFixture(playerComp);
@@ -107,9 +109,14 @@ public class Controller implements Initializable {
                 gc.setStroke(Color.color(1, 1, 1, 0.3));
                 gc.setLineWidth(3);
 
-                gc.save(); // NOTE: do transformations in this order -> Translate Scale Rotate (Skew)
-                gc.translate(canvas.getWidth() / 2, canvas.getHeight() / 2);
-                float scale = 10; // 1 meter -> 40px
+                double scale = 10.0;
+                double rot = -player.getAngle() * 180 / Math.PI;
+                Vec2 trans = player.getPosition();
+
+                gc.save();
+                Rotate r = new Rotate(rot, canvas.getWidth() / 2, canvas.getHeight() / 2);
+                gc.setTransform(r.getMxx(), r.getMyx(), r.getMxy(), r.getMyy(), r.getTx(), r.getTy());
+                gc.translate(canvas.getWidth() / 2 - trans.x * scale, canvas.getHeight() / 2 - trans.y * scale);
 
                 // Do shape draws...
                 if (DEBUG_DRAW) {
@@ -161,6 +168,7 @@ public class Controller implements Initializable {
 
     public void createAsteroid(BodyDef asteroidDef) {
         asteroidDef.position = new Vec2((float) (Math.random() - 0.5) * 100, (float) (Math.random() - 0.5) * 100);
+        asteroidDef.angle = (float) (Math.random() * Math.PI * 2);
 
         Body asteroid = world.createBody(asteroidDef);
         asteroid.m_userData = new AsteroidBodyData();
@@ -178,8 +186,5 @@ public class Controller implements Initializable {
                 ((AsteroidBodyData) asteroid.m_userData).addTile(asteroid, x, y);
             }
         }
-
-        asteroid.setLinearVelocity(new Vec2((float) (Math.random() - 0.5) * 20, (float) (Math.random() - 0.5) * 20));
-        asteroid.setAngularVelocity((float) (Math.random() - 0.5) * 0.5f);
     }
 }

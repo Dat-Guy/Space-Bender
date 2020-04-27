@@ -43,7 +43,7 @@ public class TiledBodyDataBase extends BodyDataBase {
     }
 
     @Override
-    public void draw(Body self, GraphicsContext gc, float scale) {
+    public void draw(Body self, GraphicsContext gc, double scale) {
         gc.save();
         gc.translate(self.getPosition().x * scale, self.getPosition().y * scale);
         gc.rotate(self.getAngle() * 180 / Math.PI);
@@ -120,7 +120,7 @@ public class TiledBodyDataBase extends BodyDataBase {
 
         }
 
-        public void drawMap(GraphicsContext gc, float scale) {
+        public void drawMap(GraphicsContext gc, double scale) {
             for (ArrayList<Fixture> row : tilemap) {
                 for (Fixture f : row) {
                     if (f != null){

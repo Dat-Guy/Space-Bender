@@ -9,13 +9,13 @@ import org.jbox2d.dynamics.Fixture;
 import org.jbox2d.dynamics.FixtureDef;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 public class AsteroidBodyData extends TiledBodyDataBase {
 
     public AsteroidBodyData(){
         map = new FixtureTilemap();
-        toDestroy = new ArrayList<>();
+        toDestroy = new HashMap<>();
         color = Color.color(0.2, 0.2, 0.2);
     }
 
@@ -36,5 +36,15 @@ public class AsteroidBodyData extends TiledBodyDataBase {
         map.addFixture(f, x, y);
 
         return f;
+    }
+
+    @Override
+    public void handleCollided(@NotNull Body self) {
+        for (Fixture f : toDestroy.keySet()) {
+            if (!PlayerBodyData.class.isAssignableFrom(toDestroy.get(f).m_body.m_userData.getClass())) {
+                self.destroyFixture(f);
+            }
+        }
+        toDestroy.clear();
     }
 }

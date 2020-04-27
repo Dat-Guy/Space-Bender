@@ -7,23 +7,25 @@ import org.jbox2d.dynamics.Body;
 import org.jbox2d.dynamics.Fixture;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class BodyDataBase {
 
     protected Color color;
-    protected ArrayList<Fixture> toDestroy;
+    protected Map<Fixture, Fixture> toDestroy;
 
     public BodyDataBase() {
         color = new Color(Math.max(Math.random(), 0.3), Math.max(Math.random(), 0.3), Math.max(Math.random(), 0.3), 0.5);
-        toDestroy = new ArrayList<>();
+        toDestroy = new HashMap<>();
     }
 
-    public void draw(Body self, GraphicsContext gc, float scale) {
+    public void draw(Body self, GraphicsContext gc, double scale) {
         gc.save();
         gc.translate(self.getPosition().x * scale, self.getPosition().y * scale);
         gc.rotate(self.getAngle() * 180 / Math.PI);
         gc.setStroke(color);
+        gc.setLineWidth(1);
         for (Fixture f = self.m_fixtureList; f != null; f = f.m_next) {
             PolygonShape shape = (PolygonShape) f.m_shape;
             int count = shape.getVertexCount();
@@ -40,12 +42,12 @@ public class BodyDataBase {
         gc.restore();
     }
 
-    public void addCollided(@NotNull Fixture f) {
-        toDestroy.add(f);
+    public void addCollided(@NotNull Fixture fSelf, @NotNull Fixture fOther) {
+        toDestroy.put(fSelf, fOther);
     }
 
     public void handleCollided(@NotNull Body self) {
-        for (Fixture f : toDestroy) {
+        for (Fixture f : toDestroy.keySet()) {
             f.m_userData = null;
             self.destroyFixture(f);
         }

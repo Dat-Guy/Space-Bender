@@ -35,7 +35,7 @@ public class AsteroidFixtureData extends FixtureDataBase {
     }
 
     @Override
-    public void draw(GraphicsContext gc, float scale, Color color) {
+    public void draw(GraphicsContext gc, double scale, Color color) {
         super.draw(gc, scale, color.interpolate(this.color, 0.8));
     }
 }

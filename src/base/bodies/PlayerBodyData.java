@@ -10,16 +10,16 @@ public class PlayerBodyData extends BodyDataBase {
 
     public void doKeyUpdate(@NotNull Body self) {
         if (InputHandler.getKey(KeyCode.UP)) {
-            self.applyForceToCenter(new Vec2(0, -100));
+            self.applyForceToCenter(new Vec2((float) (100 * Math.sin(self.getAngle())), (float) (-100 * Math.cos(self.getAngle()))));
         }
         if (InputHandler.getKey(KeyCode.DOWN)) {
-            self.applyForceToCenter(new Vec2(0, 100));
+            self.applyForceToCenter(new Vec2((float) (-100 * Math.sin(self.getAngle())), (float) (100 * Math.cos(self.getAngle()))));
         }
         if (InputHandler.getKey(KeyCode.LEFT)) {
-            self.applyForceToCenter(new Vec2(-100, 0));
+            self.applyForceToCenter(new Vec2((float) (-100 * Math.cos(self.getAngle())), (float) (-100 * Math.sin(self.getAngle()))));
         }
         if (InputHandler.getKey(KeyCode.RIGHT)) {
-            self.applyForceToCenter(new Vec2(100, 0));
+            self.applyForceToCenter(new Vec2((float) (100 * Math.cos(self.getAngle())), (float) (100 * Math.sin(self.getAngle()))));
         }
     }
 
