@@ -65,46 +65,69 @@ public class GameData {
     public static Color materialToColor(materials m) {
         if (m == null) {
             return null;
-        } else {
-            switch (m) {
-                case IRON:
-                    return Color.color(0.6, 0.2, 0.1);
-                case POTASSIUM:
-                    return Color.color(0.6, 0.6, 0.6);
-                case MAGNESIUM:
-                    return Color.color(0.8, 0.8, 0.8);
-                case SILICON:
-                    return Color.color(0.1, 0.2, 0.2);
-                case LITHIUM:
-                    return Color.color(0.5, 0.5, 0.5);
-                case TITANIUM:
-                    return Color.color(0.9, 0.9, 0.9);
-                case HYDROGEN:
-                    return Color.color(0.8, 0.3, 0.6);
-                case ALUMINUM:
-                    return Color.color(0.4, 0.4, 0.3);
-                case URANIUM:
-                    return Color.color(0.2, 0.8, 0.3);
-                case SULFUR:
-                    return Color.color(0.8, 0.75, 0.3);
-                case LEAD:
-                    return Color.color(0.6, 0.6, 0.8);
-                case GOLD:
-                    return Color.color(0.8, 0.7, 0.3);
-                case OXYGEN:
-                    return Color.color(0.2, 0.5, 0.9);
-                case SILVER:
-                    return Color.color(1.0, 1.0, 1.0);
-                case SODIUM:
-                    return Color.color(0.9, 0.9, 0.9);
-            }
         }
-        throw new Error("Attempted to return color for metal with no defined color.");
+        switch (m) {
+            case IRON:
+                return Color.color(0.6, 0.2, 0.1);
+            case POTASSIUM:
+                return Color.color(0.6, 0.6, 0.6);
+            case MAGNESIUM:
+                return Color.color(0.8, 0.8, 0.8);
+            case SILICON:
+                return Color.color(0.1, 0.2, 0.2);
+            case LITHIUM:
+                return Color.color(0.5, 0.5, 0.5);
+            case TITANIUM:
+                return Color.color(0.9, 0.9, 0.9);
+            case HYDROGEN:
+                return Color.color(0.8, 0.3, 0.6);
+            case ALUMINUM:
+                return Color.color(0.4, 0.4, 0.3);
+            case URANIUM:
+                return Color.color(0.2, 0.8, 0.3);
+            case SULFUR:
+                return Color.color(0.8, 0.75, 0.3);
+            case LEAD:
+                return Color.color(0.6, 0.6, 0.8);
+            case GOLD:
+                return Color.color(0.8, 0.7, 0.3);
+            case OXYGEN:
+                return Color.color(0.2, 0.5, 0.9);
+            case SILVER:
+                return Color.color(1.0, 1.0, 1.0);
+            case SODIUM:
+                return Color.color(0.9, 0.9, 0.9);
+        }
+        throw new Error("Attempted to return color for material with no defined color.");
     }
 
     public enum components {
         AMMUNITION,
         FUEL
+    }
+
+    public enum shipParts {
+        DRILL,
+        SEAT,
+        THRUSTER,
+        ARMOR
+    }
+
+    public static Color partToColor(shipParts p) {
+        if (p == null) {
+            return null;
+        }
+        switch (p) {
+            case SEAT:
+                return Color.color(0.7, 0.7, 0.7);
+            case ARMOR:
+                return Color.color(0.4, 0.6, 0.7);
+            case DRILL:
+                return Color.color(0.5, 0.45, 0.4);
+            case THRUSTER:
+                return Color.color(0.3, 0.3, 0.8);
+        }
+        throw new Error("Attempted to return color for part with no defined color");
     }
 
 }

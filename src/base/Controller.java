@@ -82,7 +82,7 @@ public class Controller implements Initializable {
         p.angularDamping = 0.5f;
 
         PolygonShape playerCollision = new PolygonShape();
-        playerCollision.setAsBox(0.5f, 1.0f);
+        playerCollision.setAsBox(0.4f, 0.9f);
         FixtureDef playerComp = new FixtureDef();
         playerComp.shape = playerCollision;
         playerComp.density = 5.0f;
@@ -144,7 +144,7 @@ public class Controller implements Initializable {
 
                 for (Body b = world.getBodyList(); b != null; b = b.getNext()) {
                     if (b.m_userData != null && BodyDataBase.class.isAssignableFrom(b.m_userData.getClass())) {
-                        ((BodyDataBase) b.m_userData).handleCollided(b);
+                        ((BodyDataBase) b.m_userData).handleDoomed(b);
                     }
                     if (b.getFixtureList() == null) {
                         toDestroy.add(b);

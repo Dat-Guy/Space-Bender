@@ -24,7 +24,7 @@ public class PlayerBodyData extends BodyDataBase {
     }
 
     @Override
-    public void handleCollided(@NotNull Body self) {
+    public void handleDoomed(@NotNull Body self) {
         toDestroy.clear();
     }
 }

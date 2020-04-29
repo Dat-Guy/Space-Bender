@@ -36,6 +36,21 @@ public class AsteroidFixtureData extends FixtureDataBase {
 
     @Override
     public void draw(GraphicsContext gc, double scale, Color color) {
-        super.draw(gc, scale, color.interpolate(this.color, 0.8));
+        double[] x = new double[physicsShape.getVertexCount()];
+        double[] y = new double[physicsShape.getVertexCount()];
+
+        for (int i = 0; i < x.length; i++) {
+            x[i] = physicsShape.getVertex(i).x * scale;
+            y[i] = physicsShape.getVertex(i).y * scale;
+        }
+        gc.setStroke(this.color);
+        gc.setFill(color);
+        gc.setLineWidth(1);
+        gc.fillPolygon(x, y, x.length);
+        gc.strokePolygon(x, y, x.length);
+    }
+
+    public InventoryNode getLoot() {
+        return loot;
     }
 }

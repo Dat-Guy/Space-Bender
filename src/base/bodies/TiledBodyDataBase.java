@@ -2,6 +2,7 @@ package base.bodies;
 
 import base.fixtures.FixtureDataBase;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.Body;
@@ -47,13 +48,13 @@ public class TiledBodyDataBase extends BodyDataBase {
         gc.save();
         gc.translate(self.getPosition().x * scale, self.getPosition().y * scale);
         gc.rotate(self.getAngle() * 180 / Math.PI);
-        map.drawMap(gc, scale);
+        map.drawMap(gc, scale, color);
         gc.restore();
     }
 
-    protected class FixtureTilemap {
+    protected static class FixtureTilemap {
 
-        private ArrayList<ArrayList<Fixture>> tilemap;
+        private final ArrayList<ArrayList<Fixture>> tilemap;
 
         private int centerTileX;
         private int centerTileY;
@@ -120,15 +121,11 @@ public class TiledBodyDataBase extends BodyDataBase {
 
         }
 
-        public void drawMap(GraphicsContext gc, double scale) {
+        public void drawMap(GraphicsContext gc, double scale, Color color) {
             for (ArrayList<Fixture> row : tilemap) {
                 for (Fixture f : row) {
-                    if (f != null){
-                        if (f.m_body == null) {
-                            f = null;
-                        } else if (f.m_userData != null && FixtureDataBase.class.isAssignableFrom(f.m_userData.getClass())) {
-                            ((FixtureDataBase) f.m_userData).draw(gc, scale, color);
-                        }
+                    if (f != null && f.m_body != null && f.m_userData != null && FixtureDataBase.class.isAssignableFrom(f.m_userData.getClass())) {
+                        ((FixtureDataBase) f.m_userData).draw(gc, scale, color);
                     }
                 }
             }

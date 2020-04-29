@@ -39,7 +39,7 @@ public class AsteroidBodyData extends TiledBodyDataBase {
     }
 
     @Override
-    public void handleCollided(@NotNull Body self) {
+    public void handleDoomed(@NotNull Body self) {
         for (Fixture f : toDestroy.keySet()) {
             if (!PlayerBodyData.class.isAssignableFrom(toDestroy.get(f).m_body.m_userData.getClass())) {
                 self.destroyFixture(f);

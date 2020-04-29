@@ -17,6 +17,17 @@ public class InventoryNode {
     }
 
     /**
+     * Takes all materials and components from another node and (if specified) its neighbors and adds them to self.
+     * @param i The node to flush.
+     */
+    public void takeAll(InventoryNode i, boolean targetedExclusive) {
+        for (GameData.components c : i.components.keySet()) {
+            this.addComponents(c, i.queryComponents(c, targetedExclusive));
+        }
+        i.consumeAll(targetedExclusive);
+    }
+
+    /**
      * Adds materials to this node
      * @param m The material to add
      * @param amount The amount to add
@@ -256,6 +267,20 @@ public class InventoryNode {
     private long queryComponentsInternal(GameData.components c) {
         components.putIfAbsent(c, (long) 0);
         return components.get(c);
+    }
+
+    /**
+     * Will destroy ALL components and materials in this (and if specified) connected nodes
+     * @param targetedExclusive Prevents connected from also being destroyed if true.
+     */
+    public void consumeAll(boolean targetedExclusive) {
+        components.clear();
+        materials.clear();
+        if (!targetedExclusive) {
+            for (InventoryNode neighbor : connected) {
+                neighbor.consumeAll(true);
+            }
+        }
     }
 
 }
