@@ -11,13 +11,15 @@ import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.Body;
 import org.jbox2d.dynamics.Fixture;
 import org.jbox2d.dynamics.FixtureDef;
+import org.jbox2d.dynamics.World;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 
 public class ShipBodyData extends TiledBodyDataBase {
 
-    float[] thrustForce; // Values should be interpreted CCW starting to the right of the ship when facing up.
+    float[] thrustForce; // Values should be interpreted CCW starting to the top of the ship when facing up.
+    private HashMap<Fixture, Body> toAdd = new HashMap<>();
 
     public ShipBodyData(Color playerColor) {
         toDestroy = new HashMap<>();
@@ -58,8 +60,18 @@ public class ShipBodyData extends TiledBodyDataBase {
 
     @Override
     public void addCollided(@NotNull Fixture fSelf, @NotNull Fixture fOther) {
-        if (AsteroidFixtureData.class.isAssignableFrom(fOther.m_userData.getClass())) {
+        if (fOther.m_userData != null && AsteroidFixtureData.class.isAssignableFrom(fOther.m_userData.getClass())) {
             ((ShipFixtureData) fSelf.m_userData).addLoot(((AsteroidFixtureData) fOther.m_userData).getLoot());
+        }
+        if (PlayerBodyData.class.isAssignableFrom(fOther.m_body.m_userData.getClass()) && ((ShipFixtureData) fSelf.m_userData).getPart() == GameData.shipParts.SEAT) {
+            ((PlayerBodyData) fOther.m_body.m_userData).seat(fSelf);
+            toAdd.put(fSelf, fOther.m_body);
+        }
+    }
+
+    public void handleToStore(@NotNull Body self, World world) {
+        for (Fixture f : toAdd.keySet()) {
+            ((ShipFixtureData) f.m_userData).setContainedEntity(self, world, toAdd.get(f));
         }
     }
 
@@ -75,10 +87,22 @@ public class ShipBodyData extends TiledBodyDataBase {
         toDestroy.clear();
     }
 
-    public void handleInput(@NotNull Body self) {
-        self.applyForceToCenter(new Vec2(0, thrustForce[1] * (InputHandler.getKey(KeyCode.UP) ? -1 : 0)));
-        self.applyForceToCenter(new Vec2(0, thrustForce[3] * (InputHandler.getKey(KeyCode.DOWN) ? 1 : 0)));
-        self.applyForceToCenter(new Vec2(0, thrustForce[2] * (InputHandler.getKey(KeyCode.LEFT) ? -1 : 0)));
-        self.applyForceToCenter(new Vec2(0, thrustForce[0] * (InputHandler.getKey(KeyCode.RIGHT) ? 1 : 0)));
+    public void handleInput(@NotNull Body self, @NotNull Body player) {
+        if (InputHandler.getKey(KeyCode.UP)) {
+            self.applyForceToCenter(new Vec2((float) (thrustForce[2] * Math.sin(self.getAngle())), (float) (-thrustForce[2] * Math.cos(self.getAngle()))));
+        }
+        if (InputHandler.getKey(KeyCode.DOWN)) {
+            self.applyForceToCenter(new Vec2((float) (-thrustForce[0] * Math.sin(self.getAngle())), (float) (thrustForce[0] * Math.cos(self.getAngle()))));
+        }
+        if (InputHandler.getKey(KeyCode.LEFT)) {
+            self.applyForceToCenter(new Vec2((float) (-thrustForce[3] * Math.cos(self.getAngle())), (float) (-thrustForce[3] * Math.sin(self.getAngle()))));
+        }
+        if (InputHandler.getKey(KeyCode.RIGHT)) {
+            self.applyForceToCenter(new Vec2((float) (thrustForce[1] * Math.cos(self.getAngle())), (float) (thrustForce[1] * Math.sin(self.getAngle()))));
+        }
+        if (InputHandler.getKey(KeyCode.SHIFT)) {
+            ((ShipFixtureData) ((PlayerBodyData) player.m_userData).getSeat().m_userData).removeContainedEntity();
+            ((PlayerBodyData) player.m_userData).unseat();
+        }
     }
 }

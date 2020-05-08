@@ -3,6 +3,7 @@ package base;
 import base.bodies.AsteroidBodyData;
 import base.bodies.BodyDataBase;
 import base.bodies.PlayerBodyData;
+import base.bodies.ShipBodyData;
 import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -13,11 +14,13 @@ import javafx.scene.paint.Color;
 import javafx.scene.transform.Rotate;
 import org.jbox2d.callbacks.ContactImpulse;
 import org.jbox2d.callbacks.ContactListener;
+import org.jbox2d.callbacks.DestructionListener;
 import org.jbox2d.collision.Manifold;
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.*;
 import org.jbox2d.dynamics.contacts.Contact;
+import org.jbox2d.dynamics.joints.Joint;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -64,6 +67,18 @@ public class Controller implements Initializable {
             }
         });
 
+        world.setDestructionListener(new DestructionListener() {
+            @Override
+            public void sayGoodbye(Joint joint) {
+                System.out.println("Joint removed");
+            }
+
+            @Override
+            public void sayGoodbye(Fixture fixture) {
+
+            }
+        });
+
         // Tell the canvas what size it should try to follow
         canvas.widthProperty().bind(parent.widthProperty());
         canvas.heightProperty().bind(parent.heightProperty());
@@ -82,7 +97,7 @@ public class Controller implements Initializable {
         p.angularDamping = 0.5f;
 
         PolygonShape playerCollision = new PolygonShape();
-        playerCollision.setAsBox(0.4f, 0.9f);
+        playerCollision.setAsBox(0.4f, 0.4f);
         FixtureDef playerComp = new FixtureDef();
         playerComp.shape = playerCollision;
         playerComp.density = 5.0f;
@@ -90,11 +105,23 @@ public class Controller implements Initializable {
 
         Body player = world.createBody(p);
         player.createFixture(playerComp);
-        player.m_userData = new PlayerBodyData();
+        player.m_userData = new PlayerBodyData(Color.color(0.2, 0.7, 0.9));
+
+        BodyDef s = new BodyDef();
+        s.type = BodyType.DYNAMIC;
+        s.position = new Vec2(0, -10);
+        s.angularDamping = 0.1f;
+        s.linearDamping = 0.1f;
+
+        Body ship = world.createBody(s);
+        ship.m_userData = new ShipBodyData(Color.color(0.2, 0.7, 0.9));
+        ((ShipBodyData) ship.m_userData).addPart(ship, 0, 0, GameData.shipParts.THRUSTER, 0);
+        ((ShipBodyData) ship.m_userData).addPart(ship, 0, 1, GameData.shipParts.SEAT, 0);
 
         new AnimationTimer() {
             @Override
             public void handle(long l) {
+
                 GraphicsContext gc = canvas.getGraphicsContext2D();
 
                 // Wipe the previous draw with a rectangle draw
@@ -109,9 +136,10 @@ public class Controller implements Initializable {
                 gc.setStroke(Color.color(1, 1, 1, 0.3));
                 gc.setLineWidth(3);
 
+                PlayerBodyData pD = (PlayerBodyData) player.m_userData;
                 double scale = 10.0;
-                double rot = -player.getAngle() * 180 / Math.PI;
-                Vec2 trans = player.getPosition();
+                double rot = (pD.isSeated() ? -pD.getSeat().m_body.getAngle() : -player.getAngle()) * 180 / Math.PI;
+                Vec2 trans = (pD.isSeated() ? pD.getSeat().m_body.getPosition() : player.getPosition());
 
                 gc.save();
                 Rotate r = new Rotate(rot, canvas.getWidth() / 2, canvas.getHeight() / 2);
@@ -138,23 +166,52 @@ public class Controller implements Initializable {
                 gc.restore();
 
                 // Do game logic
+                ((BodyDataBase) player.m_userData).applyTransform(player);
+                ((ShipBodyData) ship.m_userData).handleToStore(ship, world);
+
                 ((PlayerBodyData) player.m_userData).doKeyUpdate(player);
 
-                ArrayList<Body> toDestroy = new ArrayList<>();
+                ArrayList<Body> toDestroyB = new ArrayList<>();
 
                 for (Body b = world.getBodyList(); b != null; b = b.getNext()) {
                     if (b.m_userData != null && BodyDataBase.class.isAssignableFrom(b.m_userData.getClass())) {
                         ((BodyDataBase) b.m_userData).handleDoomed(b);
                     }
                     if (b.getFixtureList() == null) {
-                        toDestroy.add(b);
+                        b.m_userData = new DestructionFlag() {
+                            @Override
+                            public void onDestroy() {
+                                //Do nothing
+                            }
+
+                            @Override
+                            public Class getType() {
+                                return AsteroidBodyData.class;
+                            }
+                        };
                     }
-                    b.applyForceToCenter(new Vec2(-b.getPosition().x / 100 * b.m_mass, -b.getPosition().y / 100 * b.m_mass));
                 }
 
-                for (Body b : toDestroy) {
-                    world.destroyBody(b);
-                    createAsteroid(a);
+                for (Body b = world.getBodyList(); b != null;) {
+                    Body n = b.m_next;
+                    if (b.m_userData != null && DestructionFlag.class.isAssignableFrom(b.m_userData.getClass())) {
+                        if (AsteroidBodyData.class.isAssignableFrom(((DestructionFlag) b.m_userData).getType())) {
+                            createAsteroid(a);
+                        }
+                        world.destroyBody(b);
+                    }
+                    b = n;
+                }
+
+                for (Joint j = world.getJointList(); j != null;) {
+                    if (j.m_userData != null) {
+                        System.out.println(j.m_userData.getClass());
+                    }
+                    Joint n = j.m_next;
+                    if (j.m_userData != null && DestructionFlag.class.isAssignableFrom(j.m_userData.getClass())) {
+                        world.destroyJoint(j);
+                    }
+                    j = n;
                 }
 
                 //TODO: Cause disjoint asteroids to break into smaller pieces, and shift body center relative to center of mass accordingly.

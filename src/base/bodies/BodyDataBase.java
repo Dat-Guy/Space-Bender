@@ -4,6 +4,7 @@ import base.fixtures.FixtureDataBase;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import org.jbox2d.collision.shapes.PolygonShape;
+import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.Body;
 import org.jbox2d.dynamics.Fixture;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,8 @@ public class BodyDataBase {
 
     protected Color color;
     protected Map<Fixture, Fixture> toDestroy;
+    protected Vec2 qP;
+    protected float qA;
 
     public BodyDataBase() {
         color = new Color(Math.max(Math.random(), 0.3), Math.max(Math.random(), 0.3), Math.max(Math.random(), 0.3), 0.5);
@@ -57,6 +60,20 @@ public class BodyDataBase {
             self.destroyFixture(f);
         }
         toDestroy.clear();
+    }
+
+    public void queueTransform(Vec2 p, float a) {
+        qP = p;
+        qA = a;
+    }
+
+    public void applyTransform(@NotNull Body self) {
+        if (qP != null && qA != -1.0f/0.0f) {
+            System.out.println("Applied");
+            self.setTransform(qP, qA);
+            qP = null;
+            qA = 1.0f / 0.0f;
+        }
     }
 
 }
