@@ -7,6 +7,7 @@ import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.Body;
 import org.jbox2d.dynamics.Fixture;
+import org.jbox2d.dynamics.contacts.ContactEdge;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -18,6 +19,7 @@ public class BodyDataBase {
     protected Map<Fixture, Fixture> toDestroy;
     protected Vec2 qP;
     protected float qA;
+    public boolean transTick;
 
     public BodyDataBase() {
         color = new Color(Math.max(Math.random(), 0.3), Math.max(Math.random(), 0.3), Math.max(Math.random(), 0.3), 0.5);
@@ -69,7 +71,10 @@ public class BodyDataBase {
 
     public void applyTransform(@NotNull Body self) {
         if (qP != null && qA != -1.0f/0.0f) {
-            System.out.println("Applied");
+            transTick = true;
+            for (ContactEdge c = self.getContactList(); c != null; c = c.next) {
+                c.contact.setEnabled(false);
+            }
             self.setTransform(qP, qA);
             qP = null;
             qA = 1.0f / 0.0f;

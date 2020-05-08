@@ -1,12 +1,13 @@
 package base.fixtures;
 
+import base.DestructionFlag;
 import base.GameData;
 import base.InventoryNode;
 import base.bodies.BodyDataBase;
-import base.DestructionFlag;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import org.jbox2d.collision.shapes.PolygonShape;
+import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.Body;
 import org.jbox2d.dynamics.World;
 import org.jbox2d.dynamics.joints.Joint;
@@ -14,19 +15,19 @@ import org.jbox2d.dynamics.joints.WeldJointDef;
 
 public class ShipFixtureData extends FixtureDataBase {
 
-    final private WeldJointDef weldJointDef = new WeldJointDef();
-
     private GameData.shipParts type;
     private InventoryNode loot;
     private int rotation;
     private Body containedEntity;
     private Joint entityConnection;
+    private Vec2 offset;
 
-    public ShipFixtureData(PolygonShape shape, GameData.shipParts type, int rotation) {
+    public ShipFixtureData(PolygonShape shape, GameData.shipParts type, int rotation, Vec2 offset) {
         super(shape);
         this.type = type;
         this.rotation = rotation;
         this.loot = new InventoryNode();
+        this.offset = offset;
     }
 
     @Override
@@ -45,7 +46,7 @@ public class ShipFixtureData extends FixtureDataBase {
         gc.strokePolygon(x, y, x.length);
         gc.setStroke(GameData.partToColor(type).invert());
         gc.setLineWidth(2);
-        gc.strokeLine(x[rotation] * 0.8, y[rotation] * 0.8, x[(rotation + 1) % 4] * 0.8, y[(rotation + 1) % 4] * 0.8);
+        gc.strokeLine(x[rotation], y[rotation], x[(rotation + 1) % 4], y[(rotation + 1) % 4]);
     }
 
     public int getRotation() {
@@ -70,8 +71,12 @@ public class ShipFixtureData extends FixtureDataBase {
 
     public void setContainedEntity(Body self, World world, Body entity) {
         if (containedEntity == null) {
+            WeldJointDef weldJointDef = new WeldJointDef();
+            weldJointDef.collideConnected = false;
+
             weldJointDef.bodyA = self;
             weldJointDef.bodyB = entity;
+            weldJointDef.localAnchorA.addLocal(offset);
 
             entityConnection = world.createJoint(weldJointDef);
 
@@ -93,7 +98,7 @@ public class ShipFixtureData extends FixtureDataBase {
                     return null;
                 }
             });
-            ((BodyDataBase) containedEntity.m_userData).queueTransform(self.getPosition().clone().addLocal(self.m_mass * 5, 0), containedEntity.getAngle());
+            ((BodyDataBase) containedEntity.m_userData).queueTransform(self.getPosition().clone().addLocal(self.m_mass * 0.8f, 0), containedEntity.getAngle());
             containedEntity = null;
         }
     }

@@ -23,7 +23,6 @@ import org.jbox2d.dynamics.contacts.Contact;
 import org.jbox2d.dynamics.joints.Joint;
 
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 public class Controller implements Initializable {
@@ -41,12 +40,25 @@ public class Controller implements Initializable {
         world = new World(new Vec2(0, 0));
 
         world.setContactListener(new ContactListener() {
+
+            private boolean doActiveCheckA(Contact contact) {
+                return contact.m_fixtureA.getBody().m_userData != null &&
+                        BodyDataBase.class.isAssignableFrom(contact.m_fixtureA.m_body.m_userData.getClass()) &&
+                        !((BodyDataBase) contact.m_fixtureA.m_body.m_userData).transTick;
+            }
+
+            private boolean doActiveCheckB(Contact contact) {
+                return contact.m_fixtureB.getBody().m_userData != null &&
+                        BodyDataBase.class.isAssignableFrom(contact.m_fixtureB.m_body.m_userData.getClass())
+                        && !((BodyDataBase) contact.m_fixtureB.m_body.m_userData).transTick;
+            }
+
             @Override
             public void beginContact(Contact contact) {
-                if (contact.m_fixtureA.getBody().m_userData != null && BodyDataBase.class.isAssignableFrom(contact.m_fixtureA.getBody().m_userData.getClass())) {
+                if (doActiveCheckA(contact) && doActiveCheckB(contact)) {
                     ((BodyDataBase) contact.m_fixtureA.getBody().m_userData).addCollided(contact.m_fixtureA, contact.m_fixtureB);
                 }
-                if (contact.m_fixtureB.getBody().m_userData != null && BodyDataBase.class.isAssignableFrom(contact.m_fixtureB.getBody().m_userData.getClass())) {
+                if (doActiveCheckB(contact) && doActiveCheckA(contact)) {
                     ((BodyDataBase) contact.m_fixtureB.getBody().m_userData).addCollided(contact.m_fixtureB, contact.m_fixtureA);
                 }
             }
@@ -58,7 +70,6 @@ public class Controller implements Initializable {
 
             @Override
             public void preSolve(Contact contact, Manifold manifold) {
-
             }
 
             @Override
@@ -97,7 +108,7 @@ public class Controller implements Initializable {
         p.angularDamping = 0.5f;
 
         PolygonShape playerCollision = new PolygonShape();
-        playerCollision.setAsBox(0.4f, 0.4f);
+        playerCollision.setAsBox(0.3f, 0.3f);
         FixtureDef playerComp = new FixtureDef();
         playerComp.shape = playerCollision;
         playerComp.density = 5.0f;
@@ -117,6 +128,9 @@ public class Controller implements Initializable {
         ship.m_userData = new ShipBodyData(Color.color(0.2, 0.7, 0.9));
         ((ShipBodyData) ship.m_userData).addPart(ship, 0, 0, GameData.shipParts.THRUSTER, 0);
         ((ShipBodyData) ship.m_userData).addPart(ship, 0, 1, GameData.shipParts.SEAT, 0);
+        ((ShipBodyData) ship.m_userData).addPart(ship, -1, 0, GameData.shipParts.THRUSTER, 3);
+        ((ShipBodyData) ship.m_userData).addPart(ship, 1, 0, GameData.shipParts.THRUSTER, 1);
+        ((ShipBodyData) ship.m_userData).addPart(ship, 0, 2, GameData.shipParts.THRUSTER, 2);
 
         new AnimationTimer() {
             @Override
@@ -137,7 +151,7 @@ public class Controller implements Initializable {
                 gc.setLineWidth(3);
 
                 PlayerBodyData pD = (PlayerBodyData) player.m_userData;
-                double scale = 10.0;
+                double scale = 20.0;
                 double rot = (pD.isSeated() ? -pD.getSeat().m_body.getAngle() : -player.getAngle()) * 180 / Math.PI;
                 Vec2 trans = (pD.isSeated() ? pD.getSeat().m_body.getPosition() : player.getPosition());
 
@@ -166,16 +180,15 @@ public class Controller implements Initializable {
                 gc.restore();
 
                 // Do game logic
-                ((BodyDataBase) player.m_userData).applyTransform(player);
                 ((ShipBodyData) ship.m_userData).handleToStore(ship, world);
 
                 ((PlayerBodyData) player.m_userData).doKeyUpdate(player);
 
-                ArrayList<Body> toDestroyB = new ArrayList<>();
-
                 for (Body b = world.getBodyList(); b != null; b = b.getNext()) {
                     if (b.m_userData != null && BodyDataBase.class.isAssignableFrom(b.m_userData.getClass())) {
+                        ((BodyDataBase) b.m_userData).transTick = false;
                         ((BodyDataBase) b.m_userData).handleDoomed(b);
+                        ((BodyDataBase) b.m_userData).applyTransform(b);
                     }
                     if (b.getFixtureList() == null) {
                         b.m_userData = new DestructionFlag() {
@@ -203,15 +216,12 @@ public class Controller implements Initializable {
                     b = n;
                 }
 
-                for (Joint j = world.getJointList(); j != null;) {
-                    if (j.m_userData != null) {
-                        System.out.println(j.m_userData.getClass());
-                    }
-                    Joint n = j.m_next;
+                Joint n;
+                for (Joint j = world.getJointList(); j != null; j = n) {
+                    n = j.m_next;
                     if (j.m_userData != null && DestructionFlag.class.isAssignableFrom(j.m_userData.getClass())) {
                         world.destroyJoint(j);
                     }
-                    j = n;
                 }
 
                 //TODO: Cause disjoint asteroids to break into smaller pieces, and shift body center relative to center of mass accordingly.

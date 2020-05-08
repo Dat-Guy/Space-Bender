@@ -48,11 +48,11 @@ public class ShipBodyData extends TiledBodyDataBase {
 
         Fixture f = self.createFixture(fD);
 
-        f.m_userData = new ShipFixtureData(shape, part, rotation);
+        f.m_userData = new ShipFixtureData(shape, part, rotation, new Vec2(x, y));
         map.addFixture(f, x, y);
 
         if (part == GameData.shipParts.THRUSTER) {
-            thrustForce[rotation] += 10.0;
+            thrustForce[rotation] += 150.0;
         }
 
         return f;
@@ -73,13 +73,14 @@ public class ShipBodyData extends TiledBodyDataBase {
         for (Fixture f : toAdd.keySet()) {
             ((ShipFixtureData) f.m_userData).setContainedEntity(self, world, toAdd.get(f));
         }
+        toAdd.clear();
     }
 
     @Override
     public void handleDoomed(@NotNull Body self) {
         for (Fixture f : toDestroy.keySet()) {
             if (((ShipFixtureData) f.m_userData).getPart() == GameData.shipParts.THRUSTER) {
-                thrustForce[((ShipFixtureData) f.m_userData).getRotation()] -= 10.0;
+                thrustForce[((ShipFixtureData) f.m_userData).getRotation()] -= 150.0;
             }
             f.m_userData = null;
             self.destroyFixture(f);
